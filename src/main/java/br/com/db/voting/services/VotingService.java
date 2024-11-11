@@ -25,7 +25,7 @@ public class VotingService {
     private VoteRepository voteRepository;
    
     
-	  public Vote vote(Boolean voteValue, Long topicId, String cpf, Long associatedId) {
+	  public Vote vote(Boolean voteValue, Long topicId, Long associatedId) {
 		    
 		  Topic topic = topicRepository.findById(topicId).orElseThrow(() -> new RuntimeException("Pauta com ID " + topicId + " não encontrada."));
 		  if (!sessionRepository.existsByTopicAndFinalDateTimeAfter(topic, LocalDateTime.now())) throw new RuntimeException("A sessão de votos para a pauta está fechada.");
