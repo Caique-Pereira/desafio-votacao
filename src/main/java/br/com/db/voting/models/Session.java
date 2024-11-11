@@ -6,10 +6,14 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.ManyToOne;
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Entity
 @Data
+@AllArgsConstructor
+@NoArgsConstructor
 public class Session {
 
     @Id
@@ -18,7 +22,5 @@ public class Session {
     
     @ManyToOne
     private Topic topic;
-    private boolean isOpen;
-	private LocalDateTime initialDateTime;
-    private LocalDateTime FinalDateTime;
+    private LocalDateTime finalDateTime;
 }

@@ -1,20 +1,15 @@
 package br.com.db.voting.services;
 
-
-import java.util.List;
-import java.util.stream.Collectors;
+import java.time.LocalDateTime;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import br.com.db.voting.models.Topic;
 import br.com.db.voting.models.Vote;
-import br.com.db.voting.records.TopicRecord;
-import br.com.db.voting.records.VoteRecord;
 import br.com.db.voting.repositories.SessionRepository;
 import br.com.db.voting.repositories.TopicRepository;
 import br.com.db.voting.repositories.VoteRepository;
-import br.com.db.voting.utilities.Utils;
 
 @Service
 public class VotingService {
@@ -30,54 +25,20 @@ public class VotingService {
     private VoteRepository voteRepository;
    
     
-	  public VoteRecord vote(Boolean _vote, Long _topicId, String _cpf) {
+	  public Vote vote(Boolean voteValue, Long topicId, String cpf, Long associatedId) {
 		    
-		    Topic topic = topicRepository.findById(_topicId).orElseThrow(() -> new RuntimeException("Pauta inválida"));
-		    TopicRecord topicRecorder = new TopicRecord(topic);
-		    sessionRepository.findOpenSessionByTopic(topic).orElseThrow(() -> new RuntimeException("A sessão de votos está fechada."));
-
+		  Topic topic = topicRepository.findById(topicId).orElseThrow(() -> new RuntimeException("Pauta com ID " + topicId + " não encontrada."));
+		  if (!sessionRepository.existsByTopicAndFinalDateTimeAfter(topic, LocalDateTime.now())) throw new RuntimeException("A sessão de votos para a pauta está fechada.");
+		  if (voteValue == null) throw new IllegalArgumentException("O voto (sim/não) deve ser fornecido.");  
+		  if (voteRepository.existsByAssociatedIdAndTopic(associatedId, topic)) throw new RuntimeException("Essa Pauta já foi votada por esse usuário");
+ 
+          Vote vote = new Vote();
+          vote.setTopic(topic);
+          vote.setVote(voteValue);
+          vote.setAssociatedId(topicId);
+          voteRepository.save(vote);
 	        
-	        if (!Utils.isValidCpf(_cpf)) {
-	            throw new RuntimeException("CPF inválido.");
-	        }
-
-	        if (voteRepository.existsByCpfAndTopic(_cpf, topic)) {
-	            throw new RuntimeException("Essa Pauta já foi votado pelo CPF: " + _cpf);
-	        }
-		    
-	        Vote vote = new Vote();
-	        vote.setTopic(topic);
-	        vote.setVote(_vote);
-	        vote.setCpf(_cpf);
-	        voteRepository.save(vote);
-	        
-	        
-	        return new VoteRecord(vote.getId(), topicRecorder, vote.isVote(), vote.getCpf());
-	     
+	      return vote;
 	    }
-	  
-	    public List<VoteRecord> getAllVotes() {
-	        return voteRepository.findAll().stream()
-	                .map(vote -> new VoteRecord(
-	                        vote.getId(),
-	                        new TopicRecord(vote.getTopic().getId(), vote.getTopic().getDescription()),
-	                        vote.isVote(),
-	                        vote.getCpf()
-	                ))
-	                .collect(Collectors.toList());
-	    }
-
-
-	    public VoteRecord getVoteById(Long voteId) {
-	        Vote vote = voteRepository.findById(voteId)
-	                .orElseThrow(() -> new RuntimeException("Voto não encontrado com o ID: " + voteId));
-
-	        Topic topic = vote.getTopic();
-	        TopicRecord topicRecord = new TopicRecord(topic.getId(), topic.getDescription());
-
-	        return new VoteRecord(vote.getId(), topicRecord, vote.isVote(), vote.getCpf());
-	    }
-	  
-
     
 }
